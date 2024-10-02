@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fivey"
+version = "0.0.1"
+authors = [
+  { name="Myp3a", email="murza8965@gmail.com" },
+]
+description = "Pyaterochka API wrapper"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "requests"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Myp3a/5ka"
+Issues = "https://github.com/Myp3a/5ka/issues"
+
+[project.scripts]
+fivey = "fivey.cli:main"
+
+[tool.ruff]
+target-version = "py312"

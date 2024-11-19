@@ -19,8 +19,8 @@ def location_by_search(query: str) -> dict[str, Any]:
     data = resp.json()
     addr = data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
     out = {
-        "lat": addr["Point"]["pos"].split(" ")[1],
-        "lon": addr["Point"]["pos"].split(" ")[0],
+        "lat": float(addr["Point"]["pos"].split(" ")[1]),
+        "lon": float(addr["Point"]["pos"].split(" ")[0]),
         "house": "",
         "city": "",
         "street": "",

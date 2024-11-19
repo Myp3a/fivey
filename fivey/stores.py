@@ -18,11 +18,10 @@ class Store:
 class StoresAPI:
     def __init__(self, cli) -> None:
         self.cli: Client = cli
-        self.base_path = "/orders/v1/orders"
 
     def store_by_location(self, lat: float, lon: float) -> Store:
         resp = self.cli.get(
-            f"{self.base_path}/stores/",
+            "/orders/v1/orders/stores/",
             params={
                 "lat": lat,
                 "lon": lon,
@@ -31,8 +30,27 @@ class StoresAPI:
         assert isinstance(resp, dict)
         return Store(**resp)
 
-    def set_current_store(self, store: Store) -> None:
+    def nearby_stores_by_location(
+        self, lat: float, lon: float, radius: float = 0.025
+    ) -> list[Store]:
+        resp = self.cli.get(
+            "/cita/v1/stores/map",
+            params={
+                "top_latitude": lat + radius,
+                "bottom_latitude": lat - radius,
+                "left_longitude": lon - radius,
+                "right_longitude": lon + radius,
+            },
+        )
+        assert isinstance(resp, dict)
+        res = []
+        for st in resp["items"]:
+            res.append(Store(st["address"], "", st["sap_code"], True, st["is_24h"]))
+        return res
+
+    def set_current_store(self, store: Store) -> Store:
         self.cli.store = store
+        return store
 
     def get_current_store(self) -> Store | None:
         return self.cli.store

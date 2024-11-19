@@ -1,6 +1,7 @@
 import os
 from typing import Any, Callable, Literal
 
+from fivey.stores import Store
 from fivey.client import Client
 from fivey.orders import Order
 from fivey.catalog import Item, Category, Subcategory
@@ -56,7 +57,8 @@ def draw_main_menu() -> str:
         "2. Поиск\n"
         "3. Корзина\n"
         "4. Заказать\n"
-        "9. Мои заказы\n"
+        "8. Мои заказы\n"
+        "9. Выбрать магазин\n"
         "0. Сменить адрес\n"
         "q. Выход\n"
     )
@@ -93,12 +95,13 @@ def left_right(left: str, right: str) -> str:
 
 def paginate(
     order: Order,
-    items: list[Item | Category | Subcategory],
+    store: Store,
+    items: list[Item | Category | Subcategory | Store],
     action: Callable,
-    action_type: Literal["select", "remove", "get_value"],
+    action_type: Literal["select", "remove", "get_value", "set_store"],
 ) -> Any:
     page = 0
-    pages: list[list[Item | Category | Subcategory]] = [[]]
+    pages: list[list[Item | Category | Subcategory | Store]] = [[]]
     indexes = "1234567890"
     for i in items:
         if len(pages[page]) > 9:
@@ -107,9 +110,10 @@ def paginate(
         pages[page].append(i)
     page = 0
     while True:
+        print(order)
         assert order.address
         header = draw_header(
-            f"{order.address.house}, {order.address.street}, {order.address.city}",
+            f"{order.address.house}, {order.address.street}, {order.address.city} (Пятерочка {store.sap_code})",
             order.total_sum,
         )
         if isinstance(pages[page][0], Item):
@@ -125,7 +129,16 @@ def paginate(
             pages[page][0], Subcategory
         ):
             lines = [
-                f"{indexes[i]}. {pages[page][i].name}\n"
+                f"{indexes[i]}. {pages[page][i].name}\n"  # type: ignore
+                for i in range(len(pages[page]))
+            ]
+        elif isinstance(pages[page][0], Store):
+            lines = [
+                f"{
+                left_right(
+                    f"{indexes[i]}. {pages[page][i].shop_address}",  # type: ignore
+                    f"({pages[page][i].sap_code})"  # type: ignore
+                )}\n"
                 for i in range(len(pages[page]))
             ]
         lines.append("\n")
@@ -156,9 +169,13 @@ def paginate(
             case _:
                 if action_type == "remove":
                     pages[page].pop(indexes.index(letter))
-                order = action(pages[page][indexes.index(letter)])
+                    order = action(pages[page][indexes.index(letter)])
+                if action_type == "select":
+                    order = action(pages[page][indexes.index(letter)])
                 if action_type == "get_value":
                     return pages[page][indexes.index(letter)]
+                if action_type == "set_store":
+                    return action(pages[page][indexes.index(letter)])
 
 
 def main():
@@ -178,6 +195,8 @@ def main():
                 phone = ""
                 while not got_input:
                     phone = input("Телефон: +7")
+                    if len(phone) == 10:
+                        got_input = True
                 cli.auth.interactive_auth(phone)
             case "2":
                 token = input("Вставьте токен: ")
@@ -199,7 +218,7 @@ def main():
     while True:
         curr_order = cli.order
         header = draw_header(
-            f"{curr_order.address.house}, {curr_order.address.street}, {curr_order.address.city}",
+            f"{curr_order.address.house}, {curr_order.address.street}, {curr_order.address.city} (Пятерочка {cli.store.sap_code})",
             curr_order.total_sum,
         )
         menu = draw_main_menu()
@@ -207,37 +226,51 @@ def main():
         got_input = False
         while not got_input:
             letter = input("Выбор: ")
-            if len(letter) == 1 and letter in "123490q":
+            if len(letter) == 1 and letter in "1234890q":
                 got_input = True
                 match letter:
                     case "1":
                         categories = cli.catalog.categories()
                         sel_cat = paginate(
                             curr_order,
+                            cli.store,
                             categories,
                             lambda x: None,
                             action_type="get_value",
                         )
                         sel_subcat = paginate(
                             curr_order,
+                            cli.store,
                             sel_cat.subcategories,
                             lambda x: None,
                             action_type="get_value",
                         )
                         items = cli.catalog.products_list(sel_subcat.id)
                         paginate(
-                            curr_order, items, cli.basket.put, action_type="select"
+                            curr_order,
+                            cli.store,
+                            items,
+                            cli.basket.put,
+                            action_type="select",
                         )
                     case "2":
                         query = input("Искать: ")
                         items = cli.catalog.search(query)
                         paginate(
-                            curr_order, items, cli.basket.put, action_type="select"
+                            curr_order,
+                            cli.store,
+                            items,
+                            cli.basket.put,
+                            action_type="select",
                         )
                     case "3":
                         items = cli.order.basket
                         paginate(
-                            curr_order, items, cli.basket.remove, action_type="remove"
+                            curr_order,
+                            cli.store,
+                            items,
+                            cli.basket.remove,
+                            action_type="remove",
                         )
                     case "4":
                         flat = input("Квартира: ")
@@ -252,7 +285,7 @@ def main():
                             addr["lat"],
                             addr["lon"],
                         )
-                    case "9":
+                    case "8":
                         orders = cli.orders.orders(limit=10)
                         lines = [
                             left_right(
@@ -268,6 +301,24 @@ def main():
                             inp = input("Выбор: ")
                             if inp == "b":
                                 got_input = True
+                    case "9":
+                        nearby_stores = cli.stores.nearby_stores_by_location(
+                            addr["lat"], addr["lon"]
+                        )
+                        paginate(
+                            curr_order,
+                            cli.store,
+                            nearby_stores,
+                            cli.stores.set_current_store,
+                            action_type="set_store",
+                        )
+                        cli.orders.create_order(
+                            addr["house"],
+                            addr["street"],
+                            addr["city"],
+                            addr["lat"],
+                            addr["lon"],
+                        )
                     case "0":
                         query = input("Введите произвольный адрес: ")
                         addr = location_by_search(query)

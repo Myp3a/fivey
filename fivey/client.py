@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 class Client:
     def __init__(self) -> None:
         self.session = Session()
+        self.session.verify = False
         self.base_url = "https://5d.5ka.ru/api"
         self.store: Store | None = None
         self.stores = StoresAPI(self)

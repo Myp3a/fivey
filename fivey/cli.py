@@ -42,13 +42,13 @@ def draw_auth_menu() -> str:
     return lines
 
 
-def draw_header(address: str, price: float) -> str:
+def draw_header(address: str, price: str) -> str:
     cols, _ = os.get_terminal_size()
-    free_space = cols - len(address) - len(str(price)) - 4 - 8
+    free_space = cols - len(address) - len(price) - 8
     if free_space < 1:
-        address = address[: cols - len(str(price)) - 16] + "... "
-        free_space = cols - len(address) - len(str(price)) - 12
-    return left_right(address, f"{price} руб")
+        address = address[: cols - len(price) - 16] + "... "
+        free_space = cols - len(address) - len(price) - 8
+    return left_right(address, price)
 
 
 def draw_main_menu() -> str:
@@ -114,7 +114,7 @@ def paginate(
         assert order.address
         header = draw_header(
             f"{order.address.house}, {order.address.street}, {order.address.city} (Пятерочка {store.sap_code})",
-            order.total_sum,
+            f"{order.order_sum} руб. (+ {order.service_sum} руб.)",
         )
         if isinstance(pages[page][0], Item):
             lines = [
@@ -219,7 +219,7 @@ def main():
         curr_order = cli.order
         header = draw_header(
             f"{curr_order.address.house}, {curr_order.address.street}, {curr_order.address.city} (Пятерочка {cli.store.sap_code})",
-            curr_order.total_sum,
+            f"{curr_order.order_sum} руб. (+ {curr_order.service_sum} руб.)",
         )
         menu = draw_main_menu()
         draw_entire_screen(header, menu)

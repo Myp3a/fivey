@@ -37,6 +37,8 @@ class Order:
     human_id: int | None
     status: OrderStatus
     total_sum: float
+    service_sum: float
+    order_sum: float
     is_active: bool
     address: Address | None
     created: datetime | None
@@ -56,6 +58,34 @@ class OrdersAPI:
             human_id=int(response["human_id"]) if response["human_id"] else None,
             status=OrderStatus(response["status"]),
             total_sum=float(response["total_sum"]),
+            service_sum=next(
+                (
+                    i["amount"]
+                    for i in response["basket"]["full_summary"]["subtotal"]
+                    if i["name"] == "Доставка"
+                ),
+                0,
+            )
+            + next(
+                (
+                    i["amount"]
+                    for i in response["basket"]["full_summary"]["subtotal"]
+                    if i["name"] == "Сборка и упаковка"
+                ),
+                0,
+            )
+            if response.get("basket", False)
+            else 0,
+            order_sum=next(
+                (
+                    i["amount"]
+                    for i in response["basket"]["full_summary"]["subtotal"]
+                    if i["name"] == "Сумма заказа"
+                ),
+                0,
+            )
+            if response.get("basket", False)
+            else 0,
             is_active=response["is_active"],
             address=Address(
                 response["address"]["house"],
@@ -114,22 +144,7 @@ class OrdersAPI:
             },
         )
         assert isinstance(resp, dict)
-        o = Order(
-            id=resp["id"],
-            human_id=None,
-            status=OrderStatus(resp["status"]),
-            total_sum=float(resp["total_sum"]),
-            is_active=True,
-            address=Address(
-                house=resp["address"]["house"],
-                street=resp["address"]["street"],
-                city=resp["address"]["city"],
-            ),
-            created=datetime.fromisoformat(resp["created"]),
-            sap_code=resp["sap_code"],
-            shop_address=resp["shop_address"],
-            basket=[],
-        )
+        o = self.from_order_response(resp)
         self.cli.order = o
         return o
 

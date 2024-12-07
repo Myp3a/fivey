@@ -9,34 +9,6 @@ from fivey.catalog import Item, Category, Subcategory
 from fivey.location import location_by_search
 
 
-def direct():
-    cli = Client()
-    if not cli.auth.load_token_from_file():
-        cli.auth.cli_auth("79659411222")
-    lat = 59.968511
-    lon = 30.3093735
-    my_store = cli.stores.store_by_location(lat, lon)
-    cli.stores.set_current_store(my_store)
-    cli.orders.create_order(
-        "43", "Каменноостровский проспект", "Санкт-Петербург", str(lat), str(lon)
-    )
-    cats = cli.catalog.categories()
-    fcat = cats[0]
-    cesar = cli.catalog.products_list(fcat.id)[0]
-    cli.basket.put(cesar)
-    cesar.quantity = 3
-    cli.basket.put(cesar)
-    o = cli.orders.set_address_details(
-        "",
-        "4",
-        "",
-        "Парадная со стороны проспекта. Домофон не работает, позвоните мне, я спущусь и заберу",
-    )
-    cli.orders.revise()
-    cli.get(f"/orders/v4/orders/{o.id}/")
-    cli.orders.pay()
-
-
 def draw_auth_menu() -> str:
     lines = "1. Авторизоваться по номеру\n" "2. Подставить токен\n" "3. Выход\n" "\n"
     return lines
@@ -96,7 +68,7 @@ def left_right(left: str, right: str) -> str:
 def paginate(
     order: Order,
     store: Store,
-    items: list[Item | Category | Subcategory | Store],
+    items: list[Item | Category | Subcategory | Store | Card],
     action: Callable,
     action_type: Literal["select", "remove", "get_value", "set_store"],
 ) -> Any:
@@ -110,7 +82,6 @@ def paginate(
         pages[page].append(i)
     page = 0
     while True:
-        print(order)
         assert order.address
         header = draw_header(
             f"{order.address.house}, {order.address.street}, {order.address.city} (Пятерочка {store.sap_code})",

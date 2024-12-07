@@ -12,7 +12,7 @@ from fivey.location import location_by_search
 def direct():
     cli = Client()
     if not cli.auth.load_token_from_file():
-        cli.auth.interactive_auth("79659411222")
+        cli.auth.cli_auth("79659411222")
     lat = 59.968511
     lon = 30.3093735
     my_store = cli.stores.store_by_location(lat, lon)
@@ -197,7 +197,7 @@ def main():
                     phone = input("Телефон: +7")
                     if len(phone) == 10:
                         got_input = True
-                cli.auth.interactive_auth(phone)
+                cli.auth.cli_auth(phone)
             case "2":
                 token = input("Вставьте токен: ")
                 cli.auth.set_token(token, "")

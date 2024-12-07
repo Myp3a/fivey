@@ -41,12 +41,13 @@ class AuthAPI:
             if self.check_auth(token):
                 self.set_token(token, refresh_token)
                 return True
-            auth_data = self.fetch_refresh_token(refresh_token)
-            token = auth_data["access_token"]
-            refresh_token = auth_data["refresh_token"]
-            if self.check_auth(token):
-                self.set_token(token, refresh_token)
-                return True
+            if refresh_token:
+                auth_data = self.fetch_refresh_token(refresh_token)
+                token = auth_data["access_token"]
+                refresh_token = auth_data["refresh_token"]
+                if self.check_auth(token):
+                    self.set_token(token, refresh_token)
+                    return True
         return False
 
     def set_token(self, token: str, refresh_token: str) -> bool:

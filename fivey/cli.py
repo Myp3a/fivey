@@ -200,7 +200,7 @@ def main():
                 cli.auth.interactive_auth(phone)
             case "2":
                 token = input("Вставьте токен: ")
-                cli.auth.set_token(token)
+                cli.auth.set_token(token, "")
             case "3" | "q":
                 quit()
     if not cli.auth.check_auth(cli.token):

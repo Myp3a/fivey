@@ -3,7 +3,7 @@ from typing import Any, Callable, Literal
 
 from fivey.stores import Store
 from fivey.client import Client
-from fivey.orders import Order
+from fivey.orders import Card, Order
 from fivey.catalog import Item, Category, Subcategory
 
 from fivey.location import location_by_search
@@ -89,7 +89,7 @@ def left_right(left: str, right: str) -> str:
     free_space = cols - len(left) - len(str(right)) - 4
     if free_space < 1:
         left = left[: cols - len(str(right)) - 12] + "... "
-        free_space = cols - len(left) - len(str(right)) - 8
+        free_space = cols - len(left) - len(str(right)) - 4
     return f"{left}{" " * (free_space)}{right}"
 
 
@@ -101,7 +101,7 @@ def paginate(
     action_type: Literal["select", "remove", "get_value", "set_store"],
 ) -> Any:
     page = 0
-    pages: list[list[Item | Category | Subcategory | Store]] = [[]]
+    pages: list[list[Item | Category | Subcategory | Store | Card]] = [[]]
     indexes = "1234567890"
     for i in items:
         if len(pages[page]) > 9:
@@ -139,6 +139,11 @@ def paginate(
                     f"{indexes[i]}. {pages[page][i].shop_address}",  # type: ignore
                     f"({pages[page][i].sap_code})"  # type: ignore
                 )}\n"
+                for i in range(len(pages[page]))
+            ]
+        elif isinstance(pages[page][0], Card):
+            lines = [
+                f"{indexes[i]}. {pages[page][i].number}\n"  # type: ignore
                 for i in range(len(pages[page]))
             ]
         lines.append("\n")
@@ -277,7 +282,14 @@ def main():
                         comment = input("Комментарий: ")
                         cli.orders.set_address_details("", flat, "", comment)
                         cli.orders.revise()
-                        cli.orders.pay()
+                        card = paginate(
+                            curr_order,
+                            cli.store,
+                            cli.orders.get_payment_methods(),
+                            lambda x: None,
+                            "get_value",
+                        )
+                        cli.orders.pay(card)
                         cli.orders.create_order(
                             addr["house"],
                             addr["street"],

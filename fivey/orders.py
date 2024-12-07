@@ -47,6 +47,12 @@ class Order:
     basket: list[Item]
 
 
+@dataclass
+class Card:
+    id: str
+    number: str
+
+
 class OrdersAPI:
     def __init__(self, cli) -> None:
         self.cli: Client = cli
@@ -168,16 +174,38 @@ class OrdersAPI:
         assert isinstance(resp, dict)
         return self.from_order_response(resp)
 
-    def pay(self) -> None:
+    def get_payment_methods(self) -> list[Card]:
+        resp = self.cli.get(f"{self.base_path}/v1/payment-methods")
+        assert isinstance(resp, dict)
+        cards = [
+            Card(c["id"], c["payment_name"])
+            for c in resp["payments"]
+            if c["type"] == "card"
+        ]
+        return cards
+
+    def pay(self, payment_method: Card) -> None:
         if self.cli.order is None:
             return None
-        self.cli.post(
-            f"{self.base_path}/v1/orders/{self.cli.order.id}/pay-by-linked-card",
-            json={
-                "payment_active_id": 84551221,
-            },
-            headers={"x-authorization": f"Bearer {self.cli.token}"},
-        )
+        if payment_method.id == 1:
+            resp = self.cli.post(
+                f"{self.base_path}/v1/orders/{self.cli.order.id}/pay-by-unlinked-card",
+                json={
+                    "payment_active_id": payment_method.id,
+                },
+                headers={"x-authorization": f"Bearer {self.cli.token}"},
+            )
+            assert isinstance(resp, dict)
+            print(f"Оплатите заказ по ссылке: {resp["form_url"]}")
+            input("После оплаты нажмите Enter")
+        else:
+            self.cli.post(
+                f"{self.base_path}/v1/orders/{self.cli.order.id}/pay-by-linked-card",
+                json={
+                    "payment_active_id": payment_method.id,
+                },
+                headers={"x-authorization": f"Bearer {self.cli.token}"},
+            )
 
     def revise(self) -> None:
         if self.cli.order is None:

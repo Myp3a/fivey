@@ -17,6 +17,8 @@ class Address:
 
 
 class OrderStatus(Enum):
+    # WaitingForChange?
+    # AdditionalPacking?
     InCart = 0
     Cancelled = 10
     Paying = 100
@@ -26,6 +28,7 @@ class OrderStatus(Enum):
     WaitingForCourier = 7
     Delivering = 12
     Completed = 9
+    Delivered = 13
 
 
 @dataclass

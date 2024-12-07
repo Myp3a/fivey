@@ -64,7 +64,7 @@ class Client:
                         }
                     )
                     errs.append(e)
-            raise ExceptionGroup("five_ka", errs)
+            raise ExceptionGroup("fivey", errs)
 
     def get(
         self, url: str, params: dict[str, Any] | None = None

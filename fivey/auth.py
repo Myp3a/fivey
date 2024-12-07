@@ -58,9 +58,7 @@ class AuthAPI:
                     "x-device-id": uuid.UUID(
                         "".join(random.choices(string.hexdigits, k=32))
                     ).hex,
-                    "x-package-name": "ru.pyaterochka.app.browser",
-                    "x-app-version": "3.5.0",
-                    "x-platform": "android",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
                 }
             )
             with open(".token", "w", encoding="utf-8") as outf:

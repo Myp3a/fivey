@@ -38,7 +38,7 @@ class Client:
                         "http_code": resp.status_code,
                         "type": "Unknown",
                         "location": "Unknown",
-                        "message": resp.text[:100],
+                        "message": resp.text,
                     }
                 )
                 errs.append(e)

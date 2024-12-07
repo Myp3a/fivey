@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import json
 import os
 import random
 import re
@@ -31,13 +32,24 @@ class AuthAPI:
     def load_token_from_file(self) -> bool:
         if os.path.isfile(".token"):
             with open(".token", "r", encoding="utf-8") as inf:
-                token = inf.read()
+                try:
+                    auth_data = json.loads(inf.read())
+                    token = auth_data["access_token"]
+                    refresh_token = auth_data["refresh_token"]
+                except (json.JSONDecodeError, KeyError):
+                    return False
             if self.check_auth(token):
-                self.set_token(token)
+                self.set_token(token, refresh_token)
+                return True
+            auth_data = self.fetch_refresh_token(refresh_token)
+            token = auth_data["access_token"]
+            refresh_token = auth_data["refresh_token"]
+            if self.check_auth(token):
+                self.set_token(token, refresh_token)
                 return True
         return False
 
-    def set_token(self, token: str) -> bool:
+    def set_token(self, token: str, refresh_token: str) -> bool:
         if self.check_auth(token):
             self.cli.token = token
             self.cli.session.headers.update(
@@ -51,8 +63,26 @@ class AuthAPI:
                     "x-platform": "android",
                 }
             )
+            with open(".token", "w", encoding="utf-8") as outf:
+                outf.write(
+                    json.dumps({"access_token": token, "refresh_token": refresh_token})
+                )
             return True
         return False
+
+    def fetch_refresh_token(self, refresh_token: str) -> dict[str, str]:
+        resp = self.cli.session.post(
+            "https://id.x5.ru/auth/realms/ssox5id/protocol/openid-connect/token",
+            data={
+                "refresh_token": refresh_token,
+                "grant_type": "refresh_token",
+                "client_id": "tc5_mob",
+            },
+        )
+        data = resp.json()
+        token = data["access_token"]
+        refresh_token = data["refresh_token"]
+        return {"access_token": token, "refresh_token": refresh_token}
 
     def interactive_auth(self, phone: str) -> bool:
         with sync_api.sync_playwright() as pw:
@@ -103,9 +133,8 @@ class AuthAPI:
             )
             data = resp.json()
             token = data["access_token"]
-            with open(".token", "w", encoding="utf-8") as outf:
-                outf.write(token)
-            self.set_token(token)
+            refresh_token = data["refresh_token"]
+            self.set_token(token, refresh_token)
             return True
 
     def _ask_for_sms_code_cli(self, phone: str) -> None:

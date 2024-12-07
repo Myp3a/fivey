@@ -243,21 +243,23 @@ def main():
                             lambda x: None,
                             action_type="get_value",
                         )
-                        sel_subcat = paginate(
-                            curr_order,
-                            cli.store,
-                            sel_cat.subcategories,
-                            lambda x: None,
-                            action_type="get_value",
-                        )
-                        items = cli.catalog.products_list(sel_subcat.id)
-                        paginate(
-                            curr_order,
-                            cli.store,
-                            items,
-                            cli.basket.put,
-                            action_type="select",
-                        )
+                        if sel_cat:
+                            sel_subcat = paginate(
+                                curr_order,
+                                cli.store,
+                                sel_cat.subcategories,
+                                lambda x: None,
+                                action_type="get_value",
+                            )
+                            if sel_subcat:
+                                items = cli.catalog.products_list(sel_subcat.id)
+                                paginate(
+                                    curr_order,
+                                    cli.store,
+                                    items,
+                                    cli.basket.put,
+                                    action_type="select",
+                                )
                     case "2":
                         query = input("Искать: ")
                         items = cli.catalog.search(query)

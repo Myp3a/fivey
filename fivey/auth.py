@@ -58,6 +58,9 @@ class AuthAPI:
                     "x-device-id": uuid.UUID(
                         "".join(random.choices(string.hexdigits, k=32))
                     ).hex,
+                    "x-package-name": "ru.pyaterochka.app.browser",
+                    "x-platform": "android",
+                    "x-app-version": "3.2.2",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
                 }
             )

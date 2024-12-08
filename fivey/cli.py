@@ -86,7 +86,9 @@ def paginate(
             f"{order.address.house}, {order.address.street}, {order.address.city} (Пятерочка {store.sap_code})",
             f"{order.order_sum} руб. (+ {order.service_sum} руб.)",
         )
-        if isinstance(pages[page][0], Item):
+        if not pages[page]:
+            lines = ["Ничего!\n"]
+        elif isinstance(pages[page][0], Item):
             lines = [
                 f"{
                 left_right(

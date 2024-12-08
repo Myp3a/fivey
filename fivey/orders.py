@@ -211,3 +211,11 @@ class OrdersAPI:
         if self.cli.order is None:
             return None
         self.cli.post(f"{self.base_path}/v1/orders/{self.cli.order.id}/revise")
+
+    def cancel(self, order: Order, reason: str = "Передумал") -> None:
+        self.cli.post(
+            f"{self.base_path}/v2/orders/{order.id}/cancel/",
+            json={
+                "reason_to_cancel": reason,
+            },
+        )

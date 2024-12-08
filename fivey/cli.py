@@ -279,6 +279,7 @@ def main():
                             )
                             for o in orders
                         ]
+                        lines.append("c. Отменить\n")
                         lines.append("b. Назад\n")
                         draw_entire_screen(header, "".join(lines))
                         got_input = False
@@ -286,6 +287,14 @@ def main():
                             inp = input("Выбор: ")
                             if inp == "b":
                                 got_input = True
+                            elif inp == "c":
+                                num = input("Номер заказа для отмены: ")
+                                order = next(
+                                    (o for o in orders if o.human_id == int(num)), None
+                                )
+                                if order:
+                                    got_input = True
+                                    cli.orders.cancel(order)
                     case "9":
                         nearby_stores = cli.stores.nearby_stores_by_location(
                             addr["lat"], addr["lon"]

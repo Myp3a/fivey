@@ -29,8 +29,7 @@ def draw_main_menu() -> str:
         "2. Поиск\n"
         "3. Корзина\n"
         "4. Заказать\n"
-        "8. Мои заказы\n"
-        "9. Выбрать магазин\n"
+        "9. Мои заказы\n"
         "0. Сменить адрес\n"
         "q. Выход\n"
     )
@@ -202,7 +201,7 @@ def main():
         got_input = False
         while not got_input:
             letter = input("Выбор: ")
-            if len(letter) == 1 and letter in "1234890q":
+            if len(letter) == 1 and letter in "123490q":
                 got_input = True
                 match letter:
                     case "1":
@@ -270,7 +269,7 @@ def main():
                             addr["lat"],
                             addr["lon"],
                         )
-                    case "8":
+                    case "9":
                         orders = cli.orders.orders(limit=10)
                         lines = [
                             left_right(
@@ -295,24 +294,6 @@ def main():
                                 if order:
                                     got_input = True
                                     cli.orders.cancel(order)
-                    case "9":
-                        nearby_stores = cli.stores.nearby_stores_by_location(
-                            addr["lat"], addr["lon"]
-                        )
-                        paginate(
-                            curr_order,
-                            cli.store,
-                            nearby_stores,
-                            cli.stores.set_current_store,
-                            action_type="set_store",
-                        )
-                        cli.orders.create_order(
-                            addr["house"],
-                            addr["street"],
-                            addr["city"],
-                            addr["lat"],
-                            addr["lon"],
-                        )
                     case "0":
                         query = input("Введите произвольный адрес: ")
                         addr = location_by_search(query)

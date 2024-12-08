@@ -183,15 +183,13 @@ def main():
     if not cli.auth.check_auth(cli.token):
         print("Авторизация не удалась!")
         quit()
-    prev_order = cli.orders.orders()[0]
+    prev_order = cli.orders.orders(active=True)[0]
     prev_addr = prev_order.address
     addr_string = f"{prev_addr.house}, {prev_addr.street}, {prev_addr.city}"
     addr = location_by_search(addr_string)
     my_store = cli.stores.store_by_location(addr["lat"], addr["lon"])
     cli.stores.set_current_store(my_store)
-    cli.orders.create_order(
-        addr["house"], addr["street"], addr["city"], addr["lat"], addr["lon"]
-    )
+    cli.order = cli.orders.fetch_additional_data(prev_order)
     while True:
         curr_order = cli.order
         header = draw_header(

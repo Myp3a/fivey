@@ -80,6 +80,18 @@ class OrdersAPI:
                 ),
                 0,
             )
+            if response.get("basket", {}).get("full_summary", False)
+            else round(
+                next(
+                    e
+                    for e in (
+                        float(response["basket"]["final_sum"])
+                        - float(response["basket"]["total_sum"]),
+                        0,
+                    )
+                ),
+                2,
+            )
             if response.get("basket", False)
             else 0,
             order_sum=next(
@@ -90,6 +102,8 @@ class OrdersAPI:
                 ),
                 0,
             )
+            if response.get("basket", {}).get("full_summary", False)
+            else next(e for e in (float(response["basket"]["total_sum"]), 0))
             if response.get("basket", False)
             else 0,
             is_active=response["is_active"],
@@ -127,6 +141,11 @@ class OrdersAPI:
         for o in resp["items"]:
             orders.append(self.from_order_response(o))
         return orders
+
+    def fetch_additional_data(self, order: Order) -> Order:
+        resp = self.cli.get(f"{self.base_path}/v3/orders/{order.id}/")
+        assert isinstance(resp, dict)
+        return self.from_order_response(resp)
 
     def create_order(
         self, house: str, street: str, city: str, lat: str, lon: str
